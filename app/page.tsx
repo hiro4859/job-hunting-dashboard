@@ -9,15 +9,15 @@ import {
   removeCompany,
 } from "./utils/companyStore";
 import { usePathname } from "next/navigation";
+import type { CSSProperties } from "react";
 
-
-
+// CSS 変数を安全に載せる型
+type CSSVars = CSSProperties & { [key: `--${string}`]: string | number };
 
 // ───────── 定数/型 ─────────
 const STORAGE_KEY_LAYOUT = "jp.jobhunt.layout.widgets.v1";
 type WidgetId = "today" | "roadmap" | "assistant" | "companies" | "mail";
 const DEFAULT_LAYOUT: WidgetId[] = ["today", "roadmap", "assistant", "companies", "mail"];
-
 
 /* 今日の日付を保持し、真夜中に自動更新するフック */
 function useTodayDate() {
@@ -25,11 +25,11 @@ function useTodayDate() {
   useEffect(() => {
     const now = new Date();
     const nextMidnight = new Date(now);
-    nextMidnight.setHours(24, 0, 0, 0); // 今日の24:00（= 明日の0:00）
+    nextMidnight.setHours(24, 0, 0, 0);
     const ms = nextMidnight.getTime() - now.getTime();
     const timer = window.setTimeout(() => setToday(new Date()), ms);
     return () => clearTimeout(timer);
-  }, [today]); // 更新後に次の真夜中タイマーを再セット
+  }, [today]);
   return today;
 }
 
@@ -42,16 +42,9 @@ const fmtJP = (d: Date) => {
 
 /* 予定系ユーティリティ */
 function parseStart(s?: string): Date | null {
-  // "YYYY-MM-DD HH:mm 〜 ..." から開始日時のみ取得
   const m = s?.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
   if (!m) return null;
-  return new Date(
-    Number(m[1]),
-    Number(m[2]) - 1,
-    Number(m[3]),
-    Number(m[4]),
-    Number(m[5])
-  );
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]), Number(m[5]));
 }
 function pad2(n: number) {
   return n.toString().padStart(2, "0");
@@ -60,11 +53,7 @@ function formatHM(d: Date) {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 function isSameDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -108,10 +97,7 @@ export default function DashboardPage() {
     }
   }, []);
 
-  useMemo(
-    () => companies.find((c) => c.name === selectedCompanyName),
-    [companies, selectedCompanyName]
-  ); // 参照だけ（未使用でも問題なし）
+  useMemo(() => companies.find((c) => c.name === selectedCompanyName), [companies, selectedCompanyName]);
 
   const reloadCompanies = () => setCompanies(listCompanies());
 
@@ -131,11 +117,7 @@ export default function DashboardPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setParsed({
-          event: data.event,
-          date: data.date,
-          location: data.location,
-        });
+        setParsed({ event: data.event, date: data.date, location: data.location });
       } else {
         setMsg(data?.error ?? "解析に失敗しました。");
       }
@@ -160,11 +142,7 @@ export default function DashboardPage() {
     reloadCompanies();
     if (result.action === "updated" || result.action === "created") {
       const fields = (result.updatedFields ?? []).join(", ");
-      setMsg(
-        `${result.targetName ?? ""} に反映しました。${
-          fields ? `（更新: ${fields}）` : ""
-        }`
-      );
+      setMsg(`${result.targetName ?? ""} に反映しました。${fields ? `（更新: ${fields}）` : ""}`);
     } else if (result.action === "no_change") {
       setMsg(`${result.targetName ?? ""} は更新ありませんでした。`);
     } else if (result.action === "skipped_no_company") {
@@ -206,25 +184,24 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#e9f0f5] text-gray-900">
       <div className="mx-auto flex max-w-7xl gap-4 p-4">
-        {/* サイドバー（参考レイアウト） */}
+        {/* サイドバー */}
         <aside className="hidden w-16 shrink-0 flex-col gap-3 rounded-2xl bg-[#2b5276] p-4 text-white md:flex">
           <IconButton title="ホーム" href="/">
-          <HomeIcon />
+            <HomeIcon />
           </IconButton>
           <IconButton title="メール例文" href="/mail-templates">
-          <MailIcon />
+            <MailIcon />
           </IconButton>
           <IconButton title="会社" href="/company">
-          <BuildingIcon />
+            <BuildingIcon />
           </IconButton>
           <IconButton title="カレンダー" disabled>
-          <CalendarIcon />
+            <CalendarIcon />
           </IconButton>
           <IconButton title="設定" disabled>
-          <SettingsIcon />
+            <SettingsIcon />
           </IconButton>
         </aside>
-
 
         {/* メイン */}
         <main className="flex-1">
@@ -235,9 +212,7 @@ export default function DashboardPage() {
               <button
                 onClick={() => setEditMode((v) => !v)}
                 className={`rounded-xl px-3 py-1.5 text-sm font-semibold ring-1 ring-slate-200 ${
-                  editMode
-                    ? "bg-amber-500 text-white hover:brightness-110"
-                    : "bg-white text-slate-700 hover:bg-slate-50"
+                  editMode ? "bg-amber-500 text-white hover:brightness-110" : "bg-white text-slate-700 hover:bg-slate-50"
                 }`}
                 title="並び替えをロック/編集"
               >
@@ -255,7 +230,7 @@ export default function DashboardPage() {
             </div>
           </header>
 
-          {/* ウィジェット群（順番は order で制御） */}
+          {/* ウィジェット群 */}
           <section className="mt-4 grid grid-cols-1 gap-4">
             {order.map((id) => (
               <WidgetShell
@@ -269,12 +244,7 @@ export default function DashboardPage() {
                 {id === "today" && <WidgetToday companies={companies} />}
                 {id === "roadmap" && <WidgetRoadmap />}
                 {id === "assistant" && <WidgetAssistant companies={companies} />}
-                {id === "companies" && (
-                  <WidgetCompanies
-                    companies={companies}
-                    onRefresh={reloadCompanies}
-                  />
-                )}
+                {id === "companies" && <WidgetCompanies companies={companies} onRefresh={reloadCompanies} />}
                 {id === "mail" && (
                   <WidgetMail
                     companies={companies}
@@ -294,7 +264,7 @@ export default function DashboardPage() {
             ))}
           </section>
 
-          {/* フッタ導線 */}
+          {/* フッタ導線（任意で残す） */}
           <div className="mt-6 flex items-center justify-end gap-2">
             <button
               onClick={reloadCompanies}
@@ -309,11 +279,11 @@ export default function DashboardPage() {
               企業情報を編集
             </Link>
             <Link
-    href="/mail-templates"
-    className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
-  >
-    メール例文ジェネレーターへ
-  </Link>
+              href="/mail-templates"
+              className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+            >
+              メール例文ジェネレーターへ
+            </Link>
           </div>
         </main>
       </div>
@@ -353,9 +323,7 @@ function WidgetShell({
           <span className="inline-flex items-center gap-1">
             <GripIcon className="h-4 w-4" /> ドラッグで移動
           </span>
-          <span className="rounded bg-amber-50 px-2 py-0.5 text-amber-700 ring-1 ring-amber-200">
-            {labelOf(id)}
-          </span>
+          <span className="rounded bg-amber-50 px-2 py-0.5 text-amber-700 ring-1 ring-amber-200">{labelOf(id)}</span>
         </div>
       )}
       {children}
@@ -375,12 +343,8 @@ function labelOf(id: WidgetId) {
       return "メール取り込み";
     case "roadmap":
       return "選考ロードマップ";
-
   }
 }
-
-
-
 
 /* ───────── 各ウィジェット ───────── */
 function WidgetToday({ companies }: { companies: Company[] }) {
@@ -402,21 +366,15 @@ function WidgetToday({ companies }: { companies: Company[] }) {
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        {/* 本日の予定 */}
         <CardRow title="本日の予定">
           {todays.length === 0 ? (
             <div className="text-sm text-slate-600">今日は予定がありません。</div>
           ) : (
             <ul className="space-y-2 text-sm">
               {todays.map(({ company, start }) => (
-                <li
-                  key={company.id}
-                  className="flex items-center justify-between rounded border p-2 bg-white"
-                >
+                <li key={company.id} className="flex items-center justify-between rounded border p-2 bg-white">
                   <div className="flex min-w-0 items-center gap-2">
-                    <span className="rounded bg-[#e7eef6] px-2 py-0.5 text-xs text-[#2b5276]">
-                      {formatHM(start)}
-                    </span>
+                    <span className="rounded bg-[#e7eef6] px-2 py-0.5 text-xs text-[#2b5276]">{formatHM(start)}</span>
                     <span className="truncate font-medium">{company.name}</span>
                   </div>
                   <div className="ml-2 shrink-0 text-xs text-slate-600">
@@ -428,7 +386,6 @@ function WidgetToday({ companies }: { companies: Company[] }) {
           )}
         </CardRow>
 
-        {/* 次アクション（本日分から最大3件） */}
         <CardRow title="次アクション">
           {todays.length === 0 ? (
             <div className="text-sm text-slate-600">直近の会社から自動作成します。</div>
@@ -503,7 +460,9 @@ function WidgetAssistant({ companies }: { companies: Company[] }) {
                       key={c.id}
                       className="flex items-center justify-between rounded bg-white p-2 ring-1 ring-slate-200"
                     >
-                      <span className="truncate">{c.name}：{c.nextAction || "—"}</span>
+                      <span className="truncate">
+                        {c.name}：{c.nextAction || "—"}
+                      </span>
                       <span className="ml-2 shrink-0 rounded bg-[#e7eef6] px-2 py-0.5 text-[11px] text-[#2b5276]">
                         {fmtJP(start)} {formatHM(start)}
                       </span>
@@ -526,28 +485,16 @@ function WidgetAssistant({ companies }: { companies: Company[] }) {
 }
 
 /* 企業カード（既存＋分析サマリ） */
-function WidgetCompanies({
-  companies,
-  onRefresh,
-}: {
-  companies: Company[];
-  onRefresh: () => void;
-}) {
+function WidgetCompanies({ companies, onRefresh }: { companies: Company[]; onRefresh: () => void }) {
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-base font-bold text-slate-800">企業管理</h3>
         <div className="flex items-center gap-2">
-          <Link
-            href="/company"
-            className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
+          <Link href="/company" className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
             企業登録・編集へ
           </Link>
-          <button
-            onClick={onRefresh}
-            className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
-          >
+          <button onClick={onRefresh} className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50">
             一覧を更新
           </button>
         </div>
@@ -555,32 +502,19 @@ function WidgetCompanies({
 
       <div className="no-scrollbar -mx-2 flex snap-x snap-mandatory gap-3 overflow-x-auto px-2 py-1">
         {companies.length === 0 ? (
-          <div className="px-2 text-sm text-slate-500">
-            企業がありません。右上の「企業登録・編集へ」から登録してください。
-          </div>
+          <div className="px-2 text-sm text-slate-500">企業がありません。右上の「企業登録・編集へ」から登録してください。</div>
         ) : (
           companies.map((c) => (
-            <article
-              key={c.id}
-              className="min-w-[280px] snap-start rounded-2xl border border-slate-200 bg-[#f7fbff] p-4 shadow-sm"
-            >
+            <article key={c.id} className="min-w-[280px] snap-start rounded-2xl border border-slate-200 bg-[#f7fbff] p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div className="truncate font-semibold">{c.name}</div>
-                <span className="rounded bg-white px-2 py-0.5 text-[11px] text-slate-600 ring-1 ring-slate-200">
-                  締切 {c.flowDeadline || "—"}
-                </span>
+                <span className="rounded bg-white px-2 py-0.5 text-[11px] text-slate-600 ring-1 ring-slate-200">締切 {c.flowDeadline || "—"}</span>
               </div>
-              <div className="mt-2 text-sm text-slate-700">
-                {c.status || "—"}
-              </div>
-              <div className="mt-1 text-xs text-slate-600">
-                次アクション：{c.nextAction || "—"}
-              </div>
-              <div className="mt-2 text-xs text-slate-600">
-                場所/形式：{c.locationHint || "—"}
-              </div>
+              <div className="mt-2 text-sm text-slate-700">{c.status || "—"}</div>
+              <div className="mt-1 text-xs text-slate-600">次アクション：{c.nextAction || "—"}</div>
+              <div className="mt-2 text-xs text-slate-600">場所/形式：{c.locationHint || "—"}</div>
 
-              {(c.analysis && Object.values(c.analysis).some(Boolean)) && (
+              {c.analysis && Object.values(c.analysis).some(Boolean) && (
                 <div className="mt-3 rounded-lg bg-white p-3 text-xs text-slate-700 ring-1 ring-slate-200">
                   <div className="mb-1 font-semibold text-slate-800">分析</div>
                   <ul className="space-y-1">
@@ -593,7 +527,9 @@ function WidgetCompanies({
                       .filter(Boolean)
                       .slice(0, 2)
                       .map((line, i) => (
-                        <li key={i} className="truncate">{line as string}</li>
+                        <li key={i} className="truncate">
+                          {line as string}
+                        </li>
                       ))}
                     <li>
                       <Link href="/company" className="text-sky-700 underline-offset-2 hover:underline">
@@ -641,11 +577,7 @@ function WidgetMail({
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-base font-bold text-slate-800">メール取り込み</h3>
         <div className="flex items-center gap-2">
-          <select
-            className="rounded border p-2 text-sm"
-            value={selectedCompanyName}
-            onChange={(e) => setSelectedCompanyName(e.target.value)}
-          >
+          <select className="rounded border p-2 text-sm" value={selectedCompanyName} onChange={(e) => setSelectedCompanyName(e.target.value)}>
             <option value="">— 反映先の企業を選択 —</option>
             {companies.map((c) => (
               <option key={c.id} value={c.name}>
@@ -653,11 +585,7 @@ function WidgetMail({
               </option>
             ))}
           </select>
-          <Link
-            href="/company"
-            className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-            title="反映先の企業が無ければ登録してください"
-          >
+          <Link href="/company" className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50" title="反映先の企業が無ければ登録してください">
             企業を登録
           </Link>
         </div>
@@ -671,17 +599,10 @@ function WidgetMail({
           onChange={(e) => setEmailText(e.target.value)}
         />
         <div className="flex gap-2">
-          <button
-            onClick={onParse}
-            className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
-          >
+          <button onClick={onParse} className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">
             解析する
           </button>
-          <button
-            onClick={onApply}
-            disabled={!parsed || !selectedCompanyName}
-            className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-          >
+          <button onClick={onApply} disabled={!parsed || !selectedCompanyName} className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
             反映する
           </button>
           <button
@@ -727,7 +648,7 @@ function IconButton({
 }: {
   children: React.ReactNode;
   title: string;
-  href?: string;          // 追加: 遷移先
+  href?: string;
   selected?: boolean;
   disabled?: boolean;
 }) {
@@ -739,7 +660,6 @@ function IconButton({
     (isActive ? "bg-white/15 ring-1 ring-white/30" : "hover:bg-white/10") +
     (disabled ? " opacity-60 cursor-not-allowed" : "");
 
-  // href があれば Link、なければ普通のボタン
   if (href && !disabled) {
     return (
       <Link href={href} title={title} aria-label={title} className={base}>
@@ -761,13 +681,7 @@ function TopIcon({ children }: { children: React.ReactNode }) {
     </button>
   );
 }
-function CardRow({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function CardRow({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3">
       <div className="text-[13px] font-semibold text-slate-700">{title}</div>
@@ -833,12 +747,13 @@ function TrashIcon({ className = "" }: { className?: string }) {
     </svg>
   );
 }
+
 /* ───────── 選考ロードマップ（歩くキャラ付き：全期間表示 & 正確位置） ───────── */
 function WidgetRoadmap() {
   const today = useTodayDate();
 
   // 3年の4/1 を起点、4年の10/31 を終点とする（19ヶ月）
-  const start = getAcademicStart(today); // 3年4/1
+  const start = getAcademicStart(today);
   const end = new Date(start.getFullYear() + 1, 9, 31, 23, 59, 59, 999);
 
   // 月数（両端含む）
@@ -849,27 +764,29 @@ function WidgetRoadmap() {
   const monthsBefore = Math.max(0, diffMonthsInclusive(start, monthStart) - 1);
   const daysInThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   const fractionInMonth = daysInThisMonth > 1 ? (today.getDate() - 1) / (daysInThisMonth - 1) : 0;
-  const ratio = clamp((monthsBefore + fractionInMonth) / (totalMonths - 1), 0, 1); // 0〜1
+  const ratio = clamp((monthsBefore + fractionInMonth) / (totalMonths - 1), 0, 1);
 
-  // ラベル（4月〜翌年10月）
+  // ラベル
   const monthLabels = Array.from({ length: totalMonths }, (_, i) => {
     const d = addMonths(start, i);
     const m = d.getMonth() + 1;
     return `${m}月`;
   });
 
+  // CSS 変数を用いたカラム数指定
+  const gridStyle: CSSVars = { ["--cols"]: totalMonths };
+
   // フェーズ帯（目安）
   const bands: { label: string; from: number; to: number; cls: string }[] = [
-    { label: "自己分析",                 from: 0,  to: 11, cls: "bg-blue-700" },
-    { label: "業界・企業・職種研究",     from: 0,  to: 8,  cls: "bg-blue-600" },
-    { label: "サマー（インターン等）",   from: 3,  to: 5,  cls: "bg-sky-600" },
-    { label: "ウィンター（インターン等）", from: 8,  to: 10, cls: "bg-sky-600" },
+    { label: "自己分析", from: 0, to: 11, cls: "bg-blue-700" },
+    { label: "業界・企業・職種研究", from: 0, to: 8, cls: "bg-blue-600" },
+    { label: "サマー（インターン等）", from: 3, to: 5, cls: "bg-sky-600" },
+    { label: "ウィンター（インターン等）", from: 8, to: 10, cls: "bg-sky-600" },
     { label: "採用情報公開・エントリー", from: 11, to: 13, cls: "bg-amber-600" },
-    { label: "ES・筆記試験・面接",       from: 14, to: 17, cls: "bg-indigo-600" },
-    { label: "内々定",                   from: 17, to: 18, cls: "bg-emerald-600" },
+    { label: "ES・筆記試験・面接", from: 14, to: 17, cls: "bg-indigo-600" },
+    { label: "内々定", from: 17, to: 18, cls: "bg-emerald-600" },
   ];
 
-  // Hydration差異を避ける：マーカー表示はクライアントマウント後に
   const [isHydrated, setIsHydrated] = useState(false);
   useEffect(() => setIsHydrated(true), []);
 
@@ -878,28 +795,19 @@ function WidgetRoadmap() {
       <h3 className="mb-3 text-base font-bold text-slate-800">選考ロードマップ</h3>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm overflow-hidden">
-
-        {/* スクロールは無し。全期間が常に表示されるように幅は親幅100% */}
         <div className="relative">
           <div className="relative w-full pt-20 md:pt-24">
-
             {/* 月グリッド：全期間が常に1画面に収まる */}
-            <div
-              className="relative grid w-full grid-cols-[repeat(var(--cols),minmax(0,1fr))] gap-0"
-              style={{ ["--cols" as any]: totalMonths }}
-            >
+            <div className="relative grid w-full grid-cols-[repeat(var(--cols),minmax(0,1fr))] gap-0" style={gridStyle}>
               {monthLabels.map((m, i) => (
                 <div key={i} className="relative h-24 border-l border-slate-200/70">
                   <div className="absolute top-0 -translate-y-full text-[11px] text-slate-600">{m}</div>
-
-                  {/* 1月〜12月の月頭に印（上に小さく）※ 4月始まりなので 9, 21 が1, 12月付近 */}
-                  {/* ここでは各月に小目盛り、特定月に太字なども可能 */}
                 </div>
               ))}
               <div className="absolute inset-y-0 right-0 w-px bg-slate-200/70" />
             </div>
 
-            {/* フェーズ帯（absoluteで重ねる） */}
+            {/* フェーズ帯 */}
             <div className="relative -mt-14 space-y-2">
               {bands.map((b, idx) => (
                 <div
@@ -916,30 +824,22 @@ function WidgetRoadmap() {
               ))}
             </div>
 
-            {/* マイルストーンの縦線（例） */}
+            {/* マイルストーン */}
             {[
               { i: 11, label: "3月：情報公開/エントリー開始" },
               { i: 14, label: "6月：本選考スタート" },
             ].map((m) => (
-              <div
-                key={m.i}
-                className="pointer-events-none absolute inset-y-0"
-                style={{ left: `${(m.i / (totalMonths - 1)) * 100}%` }}
-              >
+              <div key={m.i} className="pointer-events-none absolute inset-y-0" style={{ left: `${(m.i / (totalMonths - 1)) * 100}%` }}>
                 <div className="today-line" />
                 <div className="absolute top-0 -translate-y-full -translate-x-1/2 z-10 whitespace-nowrap rounded bg-white px-1.5 py-0.5 text-[10px] text-slate-600 ring-1 ring-slate-200 shadow-sm">
-                 {m.label}
-                   </div>
-
+                  {m.label}
+                </div>
               </div>
             ))}
 
-            {/* 今日ライン & マスコット（クライアントマウント後に表示） */}
+            {/* 今日ライン & マスコット */}
             {isHydrated && (
-              <div
-                className="pointer-events-none absolute inset-y-0 z-20"
-                style={{ left: `${ratio * 100}%` }}
-              >
+              <div className="pointer-events-none absolute inset-y-0 z-20" style={{ left: `${ratio * 100}%` }}>
                 <div className="today-line" />
                 <div className="mascot-wrapper">
                   <div className="mascot-badge mascot-bob">
@@ -959,22 +859,16 @@ function WidgetRoadmap() {
           </div>
         </div>
 
-        {/* 今月のフォーカス（簡易ToDo） */}
+        {/* 今月のフォーカス */}
         <RoadmapTips start={start} totalMonths={totalMonths} />
       </div>
 
-      {/* ローカルCSS（ライン太め、マスコット見やすく） */}
+      {/* ローカルCSS */}
       <style jsx>{`
         .today-line {
           width: 3px;
           height: 100%;
-          background: linear-gradient(
-            to bottom,
-            transparent 0%,
-            rgba(15, 23, 42, 0.28) 10%,
-            rgba(15, 23, 42, 0.28) 90%,
-            transparent 100%
-          );
+          background: linear-gradient(to bottom, transparent 0%, rgba(15, 23, 42, 0.28) 10%, rgba(15, 23, 42, 0.28) 90%, transparent 100%);
         }
         .mascot-wrapper {
           position: absolute;
@@ -993,7 +887,11 @@ function WidgetRoadmap() {
           border: 2px solid rgba(15, 23, 42, 0.06);
         }
         @media (max-width: 480px) {
-          .mascot-badge { width: 84px; height: 84px; padding: 8px; }
+          .mascot-badge {
+            width: 84px;
+            height: 84px;
+            padding: 8px;
+          }
         }
         .mascot-img {
           width: 100%;
@@ -1001,10 +899,16 @@ function WidgetRoadmap() {
           object-fit: contain;
         }
         @keyframes bob {
-          0% { transform: translateX(-50%) translateY(0); }
-          100% { transform: translateX(-50%) translateY(-8px); }
+          0% {
+            transform: translateX(-50%) translateY(0);
+          }
+          100% {
+            transform: translateX(-50%) translateY(-8px);
+          }
         }
-        .mascot-bob { animation: bob 1.6s ease-in-out infinite alternate; }
+        .mascot-bob {
+          animation: bob 1.6s ease-in-out infinite alternate;
+        }
       `}</style>
     </section>
   );
@@ -1020,14 +924,15 @@ function RoadmapTips({ start, totalMonths }: { start: Date; totalMonths: number 
     <div className="mt-6 rounded-xl bg-[#f6fbff] p-3 ring-1 ring-slate-200/60">
       <div className="mb-1 text-sm font-semibold text-slate-800">今月のフォーカス</div>
       <ul className="list-disc pl-5 text-sm text-slate-800">
-        {tips.map((t, i) => <li key={i}>{t}</li>)}
+        {tips.map((t, i) => (
+          <li key={i}>{t}</li>
+        ))}
       </ul>
     </div>
   );
 }
 
-
-/* 画像が無い場合の簡易フォールバックSVG */
+/* 画像が無い場合の簡易フォールバックSVG（未使用なら消してOK） */
 function MascotSvg({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
@@ -1041,10 +946,8 @@ function MascotSvg({ className = "" }: { className?: string }) {
   );
 }
 
-
 /* ===== ヘルパー群（WidgetRoadmap専用） ===== */
 function getAcademicStart(d: Date) {
-  // 3年の4/1を返す（4〜12月は当年、1〜3月は前年）
   const y = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
   return new Date(y, 3, 1);
 }
@@ -1054,7 +957,6 @@ function addMonths(base: Date, months: number) {
   return d;
 }
 function diffMonthsInclusive(a: Date, b: Date) {
-  // aの月もbの月も数える（例：4月〜5月→2）
   return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth()) + 1;
 }
 function clamp(n: number, min: number, max: number) {
@@ -1066,68 +968,27 @@ function clampInt(n: number, min: number, max: number) {
 
 // 今月のおすすめタスク（要約版）
 function tipsForMonth(idx: number): string[] {
-  // 0=3年4月, ... 11=3年3月, 12=4年4月, 14=4年6月, 18=4年10月
   if (idx <= 2) {
-    return [
-      "自己分析を開始：強み・価値観・将来像を言語化",
-      "業界/職種/企業研究のインプットを並行開始",
-      "夏インターンを見据えてES・適性検査の準備着手",
-    ];
+    return ["自己分析を開始：強み・価値観・将来像を言語化", "業界/職種/企業研究のインプットを並行開始", "夏インターンを見据えてES・適性検査の準備着手"];
   } else if (idx <= 5) {
-    return [
-      "サマー期：インターン応募・参加、振り返りで自己分析を更新",
-      "志望業界の“就活の軸”をブラッシュアップ",
-      "適性検査の演習を習慣化（SPI/玉手箱 など）",
-    ];
+    return ["サマー期：インターン応募・参加、振り返りで自己分析を更新", "志望業界の“就活の軸”をブラッシュアップ", "適性検査の演習を習慣化（SPI/玉手箱 など）"];
   } else if (idx <= 10) {
-    return [
-      "オータム/ウィンター期：追加インターンやOBOG訪問を実施",
-      "ES・履歴書のたたき台を完成／添削→更新ループ",
-      "面接/グループディスカッションの練習を開始",
-    ];
+    return ["オータム/ウィンター期：追加インターンやOBOG訪問を実施", "ES・履歴書のたたき台を完成／添削→更新ループ", "面接/グループディスカッションの練習を開始"];
   } else if (idx === 11) {
-    return [
-      "採用情報公開：本選考エントリー・企業説明会に参加",
-      "募集要項と締切をダッシュボードで一元管理",
-      "志望動機を企業ごとに具体化（研究内容と接続）",
-    ];
+    return ["採用情報公開：本選考エントリー・企業説明会に参加", "募集要項と締切をダッシュボードで一元管理", "志望動機を企業ごとに具体化（研究内容と接続）"];
   } else if (idx <= 13) {
-    return [
-      "会社説明会を活用し質問を準備→熱意を可視化",
-      "ES提出のスケジュール逆算（締切・必要書類を確認）",
-      "OBOG訪問の実施・記録（学び→志望理由へ反映）",
-    ];
+    return ["会社説明会を活用し質問を準備→熱意を可視化", "ES提出のスケジュール逆算（締切・必要書類を確認）", "OBOG訪問の実施・記録（学び→志望理由へ反映）"];
   } else if (idx <= 17) {
-    return [
-      "筆記試験・面接の本番期：過去問/模擬面接でPDCA",
-      "面接ログを残し改善点を次回までに反映",
-      "複数社のフロー進捗と提出物を確実にトラッキング",
-    ];
+    return ["筆記試験・面接の本番期：過去問/模擬面接でPDCA", "面接ログを残し改善点を次回までに反映", "複数社のフロー進捗と提出物を確実にトラッキング"];
   } else {
-    return [
-      "内々定期：比較軸で意思決定、入社後の学習計画を設計",
-      "残り選考があれば最後まで丁寧に対応",
-      "お礼連絡・入社前準備（必要書類/研修情報）",
-    ];
+    return ["内々定期：比較軸で意思決定、入社後の学習計画を設計", "残り選考があれば最後まで丁寧に対応", "お礼連絡・入社前準備（必要書類/研修情報）"];
   }
 }
 
 function MailIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-      className="w-6 h-6"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-18 8h18a2 2 0 002-2V8a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2z"
-      />
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-18 8h18a2 2 0 002-2V8a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2z" />
     </svg>
   );
 }
