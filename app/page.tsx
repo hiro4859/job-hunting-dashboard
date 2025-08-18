@@ -1111,6 +1111,7 @@ function tipsForMonth(idx: number): string[] {
     ];
   }
 }
+
 function MailIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
