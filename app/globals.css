@@ -1,3 +1,11 @@
 @import "tailwindcss";
 
 /* 好きな共通スタイルはこの下に書いてOK */
+/* ====== glass look tweaks ====== */
+html, body {
+  overscroll-behavior: none;
+}
+/* ====== glass look tweaks ====== */
+html, body {
+  overscroll-behavior: none;
+}

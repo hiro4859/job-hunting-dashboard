@@ -16,3 +16,5 @@ out/
 !.env.example
 .DS_Store
 *.local
+
+.vercel

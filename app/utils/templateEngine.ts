@@ -13,7 +13,24 @@ function getPath(obj: JSONObject, path: string): JSONValue | undefined {
   }, obj);
 }
 
-// 式の評価: join / 論理和 (a || "fallback") / 変数参照
+/** 日付フォーマット（YYYY/MM/DD（曜）HH:mm） */
+export function formatDateJP(src?: string) {
+  if (!src) return "";
+  const m = src.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})\s+(\d{1,2}):(\d{2})/);
+  if (!m) return src;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]), Number(m[5]));
+  const w = "日月火水木金土"[d.getDay()];
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${m[1]}/${pad(Number(m[2]))}/${pad(Number(m[3]))}（${w}）${pad(Number(m[4]))}:${m[5]}`;
+}
+
+/** テンプレから呼び出せるヘルパー群（evalExpr より上で定義！） */
+const helpers: Record<string, (...args: unknown[]) => JSONValue> = {
+  // {{ format(someDate) }} → "YYYY/MM/DD（曜）HH:mm"
+  format: (v?: unknown) => formatDateJP(typeof v === "string" ? v : String(v ?? "")),
+};
+
+// 式の評価: join / 関数呼び出し / 論理和 (a || "fallback") / 変数参照
 function evalExpr(expr: string, ctx: JSONObject): JSONValue | undefined {
   // join users ", "
   const join = expr.match(/^join\s+([a-zA-Z0-9_.]+)\s+"([^"]*)"$/);
@@ -21,13 +38,24 @@ function evalExpr(expr: string, ctx: JSONObject): JSONValue | undefined {
     const arr = getPath(ctx, join[1]);
     const sep = join[2];
     if (Array.isArray(arr)) {
-      return arr.map(v => (v == null ? "" : String(v))).join(sep);
+      return arr.map((v) => (v == null ? "" : String(v))).join(sep);
     }
     return "";
   }
 
+  // 関数呼び出し: func(argPath)
+  const call = expr.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\s*([a-zA-Z0-9_.]+)?\s*\)$/);
+  if (call) {
+    const [, fn, argPath] = call;
+    const f = helpers[fn];
+    if (typeof f === "function") {
+      const arg = argPath ? getPath(ctx, argPath) : undefined;
+      return f(arg);
+    }
+  }
+
   // a || b || "text"
-  const parts = expr.split("||").map(s => s.trim());
+  const parts = expr.split("||").map((s) => s.trim());
   if (parts.length > 1) {
     for (const p of parts) {
       const quoted = p.match(/^"(.*)"$|^'(.*)'$/);
@@ -56,15 +84,4 @@ export function renderTemplate(src: string, ctx: JSONObject): string {
 
   // 末尾の空白整理
   return src.replace(/[ \t]+\n/g, "\n").trim();
-}
-
-// 日付フォーマット（YYYY/MM/DD（曜）HH:mm）
-export function formatDateJP(src?: string) {
-  if (!src) return "";
-  const m = src.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})\s+(\d{1,2}):(\d{2})/);
-  if (!m) return src;
-  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]), Number(m[5]));
-  const w = "日月火水木金土"[d.getDay()];
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${m[1]}/${pad(Number(m[2]))}/${pad(Number(m[3]))}（${w}）${pad(Number(m[4]))}:${m[5]}`;
 }
