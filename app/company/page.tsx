@@ -203,10 +203,11 @@ function useResizer(initial: Record<ColId, number> = { es: 33, analysis: 34, inf
     const dxPx = e.clientX - startX;
     const dxPercent = (dxPx / rect.width) * 100;
 
-    let newA = clamp(aW + dxPercent, MIN_W, MAX_W);
+    const newA = clamp(aW + dxPercent, MIN_W, MAX_W);
     let newB = clamp(bW - dxPercent, MIN_W, MAX_W);
 
-    // 片側の制限でズレた分をもう片側に反映
+
+    // 片側の
     const corr = aW + bW - (newA + newB);
     if (Math.abs(corr) > 0.01) {
       if (corr > 0) {

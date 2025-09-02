@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { MAIL_TEMPLATES, type MailTemplate as TMail, type Field } from "@/app/templates/mailTemplates";
-import { renderTemplate } from "@/app/utils/templateEngine";
+import { renderTemplate, type JSONObject } from "@/app/utils/templateEngine";
 
 /* ---------------- プロフィール ---------------- */
 type Profile = {
@@ -124,17 +124,17 @@ function FieldInput({
 
 /** テンプレに渡す文脈を構築（user / date.* / 各フィールド） */
 function buildContext(values: FormValues, profile: Profile) {
-  const ctx: any = { ...values, user: { ...profile } };
 
-  // よく使う日付エイリアス：eventDate → date.*
+  const ctx: JSONObject = { ...values, user: { ...profile } };
+
   if (values.eventDate) {
     const p = parseToParts(values.eventDate);
-    if (p) ctx.date = p;
+    if (p) ctx.date = p as unknown as JSONObject; // 文字列だけの素直なオブジェクトなので問題なし
   }
-  // 他、wish1 などはテンプレ側が {{format(wish1)}} で整形する想定（templateEngine の format 対応前提）
 
   return ctx;
 }
+
 
 export default function MailTemplatesPage() {
   const templates = MAIL_TEMPLATES as TMail[];
