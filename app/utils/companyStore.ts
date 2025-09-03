@@ -3,6 +3,16 @@
 /** 進行ロジック */
 export type AdvancePolicy = "byDate" | "byKeyword" | "manual";
 
+/** ES下書き（新規追加） */
+export type ESDraft = {
+  selfPR?: string;         // 自己PR
+  studentLife?: string;    // ガクチカ
+  motivation?: string;     // 志望動機
+  strengths?: string;      // 強み
+  weaknesses?: string;     // 弱み
+  free?: string;           // 自由記述
+};
+
 /** 企業分析テンプレ（新規追加） */
 export type CompanyAnalysis = {
   revenue?: string;                 // 売上
@@ -54,6 +64,11 @@ export type Company = {
 
   // 追加：企業分析テンプレ
   analysis?: CompanyAnalysis;
+
+  imageUrl?: string; // カード用のユーザーアップロード画像（dataURL）
+
+  /** ES下書き（新規追加） */
+  es?: ESDraft;
 };
 
 const STORAGE_KEY = "jp.jobhunt.companies";
@@ -120,7 +135,8 @@ export function upsertCompany(input: Partial<Company> & { name: string }): Compa
       updatedAt: now,
       advancePolicy: input.advancePolicy ?? existing.advancePolicy ?? "byDate",
       eventHistory: input.eventHistory ?? existing.eventHistory ?? [],
-      analysis: { ...(existing.analysis ?? {}), ...(input.analysis ?? {}) }, // 追加：部分マージ
+      analysis: { ...(existing.analysis ?? {}), ...(input.analysis ?? {}) }, // 部分マージ
+      es: { ...(existing.es ?? {}), ...(input.es ?? {}) },                  // 部分マージ
     };
     saveAll(all.map((c) => (c.id === existing.id ? merged : c)));
     return merged;
@@ -144,7 +160,9 @@ export function upsertCompany(input: Partial<Company> & { name: string }): Compa
     updatedAt: now,
     advancePolicy: input.advancePolicy ?? "byDate",
     eventHistory: [],
-    analysis: input.analysis ?? {}, // 追加：初期化
+    analysis: input.analysis ?? {},
+    imageUrl: input.imageUrl ?? "",
+    es: input.es ?? {},
   };
   saveAll([...all, created]);
   return created;
@@ -375,6 +393,7 @@ export function upsertFromParsedEmail(parsed: {
   upsertCompany({ name: existing.name, ...updates });
   return { action: "updated", targetName: existing.name, updatedFields };
 }
+
 /* ================== 削除 ================== */
 /** IDで1社削除。成功=true / 見つからない=false */
 export function removeCompany(id: string): boolean {
@@ -390,4 +409,18 @@ export function removeCompanyByName(name: string): boolean {
   const target = findByNormalized(name);
   if (!target) return false;
   return removeCompany(target.id);
+}
+
+/** 会社のカード画像（data URL）を設定／クリア(null) */
+export function setCompanyImage(name: string, dataUrl: string | null): Company | undefined {
+  const all = loadAll();
+  const target = all.find((c) => c.name === name);
+  if (!target) return;
+  const updated: Company = {
+    ...target,
+    imageUrl: dataUrl ?? "",
+    updatedAt: new Date().toISOString(),
+  };
+  saveAll(all.map((c) => (c.id === target.id ? updated : c)));
+  return updated;
 }

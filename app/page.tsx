@@ -201,6 +201,10 @@ export default function DashboardPage() {
           <IconButton title="設定" disabled>
             <SettingsIcon />
           </IconButton>
+          <IconButton title="カード一覧" href="/companies">
+            <BuildingIcon />
+          </IconButton>
+
         </aside>
 
         {/* メイン */}
