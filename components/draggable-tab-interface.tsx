@@ -146,20 +146,39 @@ export function DraggableTabInterface() {
   };
 
   // 任意フィールド setter
-  const setField =
-    (path: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const v = e.target.value;
-      setModel((prev) => {
-        if (!prev) return prev;
-        const next: any = structuredClone(prev);
-        const seg = path.split(".");
-        let cur = next;
-        for (let i = 0; i < seg.length - 1; i++) cur[seg[i]] ??= {};
-        cur[seg.at(-1)!] = v;
-        next.updatedAt = new Date().toISOString();
-        return next as EditModel;
-      });
-    };
+  // 汎用 setter（lint 対応版）
+const setField =
+  (path: string) =>
+  (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const v = e.target.value;
+    setModel((prev) => {
+      if (!prev) return prev;
+
+      // structuredClone で EditModel をコピー
+      const next: EditModel = structuredClone(prev);
+
+      // ※ ここだけ any を局所許可（深いパス代入のため）
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const setDeep = (obj: any, dottedPath: string, value: unknown) => {
+        const seg = dottedPath.split(".");
+        // eslint-disable-next-line prefer-const
+        let ref = obj; // ここは再代入するので let のままにする
+        for (let i = 0; i < seg.length - 1; i += 1) {
+          const key = seg[i];
+          if (typeof ref[key] !== "object" || ref[key] === null) {
+            ref[key] = {};
+          }
+          ref = ref[key];
+        }
+        ref[seg[seg.length - 1]] = value;
+      };
+
+      setDeep(next, path, v);
+      next.updatedAt = new Date().toISOString();
+      return next;
+    });
+  };
+
 
   // 自動保存（500ms デバウンス）
   const autosave = useDebouncedCallback<EditModel | null>((m) => {

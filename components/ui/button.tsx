@@ -1,4 +1,3 @@
-// components/ui/button.tsx
 "use client";
 
 import * as React from "react";
@@ -20,23 +19,28 @@ const base =
 
 const variantClass: Record<Variants, string> = {
   default: "bg-slate-900 text-white hover:bg-slate-800",
-  secondary: "bg-white/80 text-slate-800 ring-1 ring-slate-200 hover:bg-white",
-  outline: "bg-transparent text-slate-800 ring-1 ring-slate-300 hover:bg-white",
+  secondary:
+    "bg-white/80 text-slate-800 ring-1 ring-slate-200 hover:bg-white",
+  outline:
+    "bg-transparent text-slate-800 ring-1 ring-slate-300 hover:bg-white",
   destructive: "bg-red-600 text-white hover:bg-red-700",
 };
 
-const sizeClass = {
+const sizeClass: Record<Sizes, string> = {
   // "default" を md と同じにする（好みで調整OK）
   default: "h-9 px-3 text-sm",
   sm: "h-8 px-2 text-sm",
   md: "h-9 px-3 text-sm",
   lg: "h-10 px-4 text-base",
   icon: "h-9 w-9 p-0",
-} as const;
+};
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, asChild, variant = "default", size = "md", ...props }, ref) => {
-    const Comp: any = asChild ? Slot : "button";
+  (
+    { className, asChild = false, variant = "default", size = "md", ...props },
+    ref
+  ) => {
+    const Comp = asChild ? Slot : "button";
     return (
       <Comp
         ref={ref}
@@ -47,6 +51,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   }
 );
 Button.displayName = "Button";
+
 // 既存の exports の下に追記
 export function buttonVariants(opts?: {
   variant?: Variants;

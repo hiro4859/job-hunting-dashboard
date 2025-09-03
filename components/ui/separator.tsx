@@ -4,8 +4,8 @@ import * as React from "react";
 import * as SeparatorPrimitive from "@radix-ui/react-separator";
 import { cn } from "@/components/ui/utils";
 
-export interface SeparatorProps
-  extends React.ComponentProps<typeof SeparatorPrimitive.Root> {}
+// interface を type alias に変更
+export type SeparatorProps = React.ComponentProps<typeof SeparatorPrimitive.Root>;
 
 export function Separator({
   className,
@@ -13,8 +13,7 @@ export function Separator({
   decorative = true,
   ...props
 }: SeparatorProps) {
-  return
-  (
+  return (
     <SeparatorPrimitive.Root
       decorative={decorative}
       orientation={orientation}
