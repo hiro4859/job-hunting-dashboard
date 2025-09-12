@@ -1,25 +1,20 @@
-import * as React from "react";
-import { cn } from "@/components/ui/utils";
+﻿"use client"
+import * as React from "react"
+import { cn } from "@/lib/utils"
 
-// interface を type alias に置き換え（空の {} を避ける）
-export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
-
-export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type = "text", ...props }, ref) => {
+export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  ({ className, ...props }, ref) => {
     return (
       <input
         ref={ref}
-        type={type}
         className={cn(
-          "flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm",
-          "placeholder:text-slate-400",
-          "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-sky-500/30 focus-visible:border-sky-400",
-          "disabled:opacity-50 disabled:cursor-not-allowed",
+          "h-10 w-full rounded-xl border border-white/20 bg-white/10 px-3 text-sm outline-none",
+          "placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/40",
           className
         )}
         {...props}
       />
-    );
+    )
   }
-);
-Input.displayName = "Input";
+)
+Input.displayName = "Input"

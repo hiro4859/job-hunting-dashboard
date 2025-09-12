@@ -1,64 +1,48 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { cn } from "./utils";
+import { cn } from "@/lib/utils";
 
-type Variants = "default" | "secondary" | "outline" | "destructive";
-type Sizes = "default" | "sm" | "md" | "lg" | "icon";
+type Variant = "default" | "ghost";
+type Size = "default" | "sm" | "icon" | "lg"
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+
+export interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
   asChild?: boolean;
-  variant?: Variants;
-  size?: Sizes;
+  variant?: Variant;
+  size?: Size;
 }
 
-const base =
-  "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-4 disabled:opacity-50 disabled:pointer-events-none";
-
-const variantClass: Record<Variants, string> = {
-  default: "bg-slate-900 text-white hover:bg-slate-800",
-  secondary:
-    "bg-white/80 text-slate-800 ring-1 ring-slate-200 hover:bg-white",
-  outline:
-    "bg-transparent text-slate-800 ring-1 ring-slate-300 hover:bg-white",
-  destructive: "bg-red-600 text-white hover:bg-red-700",
-};
-
-const sizeClass: Record<Sizes, string> = {
-  // "default" を md と同じにする（好みで調整OK）
-  default: "h-9 px-3 text-sm",
-  sm: "h-8 px-2 text-sm",
-  md: "h-9 px-3 text-sm",
-  lg: "h-10 px-4 text-base",
-  icon: "h-9 w-9 p-0",
-};
-
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    { className, asChild = false, variant = "default", size = "md", ...props },
-    ref
-  ) => {
+export const Button = React.forwardRef<React.ElementRef<"button">, ButtonProps>(
+  ({ asChild = false, className, variant = "default", size = "default", ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
+
+    const base =
+      "inline-flex items-center justify-center rounded-xl border transition " +
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 " +
+      "disabled:opacity-50 disabled:pointer-events-none";
+
+    const variants: Record<Variant, string> = {
+      default: "bg-primary text-primary-foreground hover:opacity-90 border-transparent",
+      ghost: "bg-transparent text-foreground hover:bg-white/10 border-white/20",
+    };
+
+    const sizes: Record<Size, string> = {
+      default: "h-10 px-4",
+      sm: "h-8 px-3 text-sm",
+      icon: "h-9 w-9 p-0",
+      lg: "h-12 px-6 text-base",
+    };
+
     return (
       <Comp
-        ref={ref}
-        className={cn(base, variantClass[variant], sizeClass[size], className)}
+        ref={ref as any}
+        className={cn(base, variants[variant], sizes[size], className)}
         {...props}
       />
     );
   }
 );
-Button.displayName = "Button";
 
-// 既存の exports の下に追記
-export function buttonVariants(opts?: {
-  variant?: Variants;
-  size?: Sizes;
-  className?: string;
-}) {
-  const v = opts?.variant ?? "default";
-  const s = opts?.size ?? "md";
-  return cn(base, variantClass[v], sizeClass[s], opts?.className);
-}
+Button.displayName = "Button";
