@@ -23,7 +23,12 @@ export function SortAndFilterBar({ sort, onSortChange, industries, selected, onT
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <ArrowUpDown className="size-4 text-muted-foreground" />
-          <Select value={sort} onValueChange={onSortChange}>
+          <Select
+            value={sort}
+            onValueChange={(v) => {
+              if (v === "created" || v === "deadline") onSortChange(v)
+            }}
+          >
             <SelectTrigger className="w-32 bg-white/10 border-white/20">
               <SelectValue />
             </SelectTrigger>
@@ -45,9 +50,11 @@ export function SortAndFilterBar({ sort, onSortChange, industries, selected, onT
           <Badge
             key={industry}
             variant={selected.includes(industry) ? "default" : "outline"}
-            className={`cursor-pointer transition-all duration-200 ${ selected.includes(industry)
-              ? "bg-primary text-primary-foreground"
-              : "bg-white/10 text-foreground hover:bg-white/20 border-white/20" }`}
+            className={`cursor-pointer transition-all duration-200 ${
+              selected.includes(industry)
+                ? "bg-primary text-primary-foreground"
+                : "bg-white/10 text-foreground hover:bg-white/20 border-white/20"
+            }`}
             onClick={() => onToggle(industry)}
           >
             {industry}
