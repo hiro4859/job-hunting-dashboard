@@ -101,9 +101,11 @@ export function DraggableTabInterface() {
     };
   };
 
-  const handleSplitResize = (_e: React.MouseEvent) => {
-    const startX = (typeof window !== "undefined" ? (window as any).event?.clientX : 0) as number;
-    const startRatio = splitRatio;
+  const handleSplitResize = (e: React.MouseEvent<HTMLDivElement>) => {
+  const startX = e.clientX;
+  const startRatio = splitRatio;
+  
+
 
     const onMove = (e: MouseEvent) => {
       const container = containerRef.current;

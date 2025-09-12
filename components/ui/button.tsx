@@ -16,7 +16,7 @@ export interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
 
 export const Button = React.forwardRef<React.ElementRef<"button">, ButtonProps>(
   ({ asChild = false, className, variant = "default", size = "default", ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
+    const Comp: React.ElementType = asChild ? Slot : "button";
 
     const base =
       "inline-flex items-center justify-center rounded-xl border transition " +
@@ -37,9 +37,9 @@ export const Button = React.forwardRef<React.ElementRef<"button">, ButtonProps>(
 
     return (
       <Comp
-        ref={ref as any}
-        className={cn(base, variants[variant], sizes[size], className)}
-        {...props}
+         ref={ref}
+         className={cn(base, variants[variant], sizes[size], className)}
+         {...props}
       />
     );
   }
